@@ -100,7 +100,7 @@ jobs:
         retention-days: 7
 
     - name: Generate test report
-      uses: dorny/test-reporter@v1
+      uses: dorny/test-reporter@v2
       if: success() || failure()
       with:
         name: Maven Tests
