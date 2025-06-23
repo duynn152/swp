@@ -1,0 +1,17 @@
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/dto/AuthenticationResponse.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/config/CorsConfig.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/config/SecurityConfig.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/BackendApplication.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/controller/AuthController.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/service/JwtService.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/service/CustomUserDetailsService.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/repository/UserRepository.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/service/impl/UserServiceImpl.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/dto/AuthenticationRequest.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/service/UserService.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/PasswordHashGenerator.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/dto/UserResponse.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/entity/User.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/entity/UserRole.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/controller/UserController.java
+/Users/nhatpm.sg/Desktop/swp/swp/backend/src/main/java/com/swp/backend/config/OpenApiConfig.java
