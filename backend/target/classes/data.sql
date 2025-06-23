@@ -10,6 +10,7 @@ ON CONFLICT (username) DO NOTHING;
 -- Staff users (password: staff123)
 INSERT INTO users (username, email, password, full_name, phone, date_of_birth, gender, role, is_active, created_at, updated_at) 
 VALUES 
+('staff', 'staff@medcare.vn', '$2a$10$Xl0yhvzLIxobzgESDdQgOOyqJ4JgVdEMs6PLZrAb.xDh2L0KXkZcq', 'Nhân viên', '0901234567', '1991-01-01', 'MALE', 'STAFF', true, NOW(), NOW()),
 ('staff1', 'staff1@medcare.vn', '$2a$10$Xl0yhvzLIxobzgESDdQgOOyqJ4JgVdEMs6PLZrAb.xDh2L0KXkZcq', 'Nguyễn Văn A', '0901234568', '1992-05-15', 'MALE', 'STAFF', true, NOW(), NOW()),
 ('staff2', 'staff2@medcare.vn', '$2a$10$Xl0yhvzLIxobzgESDdQgOOyqJ4JgVdEMs6PLZrAb.xDh2L0KXkZcq', 'Trần Thị B', '0901234569', '1993-08-20', 'FEMALE', 'STAFF', true, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
