@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (same as production)
+  postgres:
+    image: postgres:15-alpine
+    container_name: swp-postgres-dev
+    environment:
+      POSTGRES_DB: swpdb_dev
+      POSTGRES_USER: swpuser
+      POSTGRES_PASSWORD: swppassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./backend/src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swpuser -d swpdb_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - swp-dev-network
+
+  # Backend for Development (with volume mounting for hot reload)
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: swp-backend-dev
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/swpdb_dev
+      SPRING_DATASOURCE_USERNAME: swpuser
+      SPRING_DATASOURCE_PASSWORD: swppassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
+      JWT_SECRET: mySecretKey123456789
+      JWT_EXPIRATION: 86400000
+      SPRING_DEVTOOLS_RESTART_ENABLED: true
+      SPRING_DEVTOOLS_LIVERELOAD_ENABLED: true
+    ports:
+      - "8080:8080"
+      - "35729:35729" # LiveReload port
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/pom.xml:/app/pom.xml
+      - maven_cache:/root/.m2
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - swp-dev-network
+
+  # Frontend for Development (with volume mounting for hot reload)
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.dev
+    container_name: swp-frontend-dev
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080/api
+      - VITE_DEV_MODE=true
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.app.json:/app/tsconfig.app.json
+      - ./tsconfig.node.json:/app/tsconfig.node.json
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./postcss.config.js:/app/postcss.config.js
+      - ./eslint.config.js:/app/eslint.config.js
+      - node_modules:/app/node_modules
+    depends_on:
+      backend-dev:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - swp-dev-network
+
+  # Redis for development (optional, for caching)
+  redis-dev:
+    image: redis:7-alpine
+    container_name: swp-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - swp-dev-network
+
+  # Mailhog for email testing (development only)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: swp-mailhog-dev
+    ports:
+      - "1025:1025" # SMTP port
+      - "8025:8025" # Web UI port
+    networks:
+      - swp-dev-network
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+  maven_cache:
+  node_modules:
+
+networks:
+  swp-dev-network:
+    driver: bridge 
