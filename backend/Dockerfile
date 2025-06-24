@@ -16,8 +16,8 @@ COPY src ./src
 # Build the application
 RUN mvn clean package -DskipTests
 
-# Production stage
-FROM openjdk:17-jre-slim AS production
+# Production stage - Use Eclipse Temurin instead of deprecated openjdk
+FROM eclipse-temurin:17-jre-jammy AS production
 
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -45,5 +45,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Start the application
-ENTRYPOINT ["java", "-jar", "app.jar"] 
+# Start the application with production profile
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"] 
