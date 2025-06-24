@@ -7,7 +7,18 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && mvn spring-boot:run",
+    "dev:frontend": "vite",
+    "start": "npm run dev:full",
+    "dev:docker": "docker-compose up --build",
+    "dev:docker-down": "docker-compose down",
+    "backend:test": "cd backend && mvn test",
+    "backend:build": "cd backend && mvn clean package",
+    "check:health": "curl -f http://localhost:8080/actuator/health && curl -f http://localhost:5173",
+    "logs:backend": "tail -f logs/backend.log",
+    "logs:frontend": "tail -f logs/frontend.log"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.2",
@@ -23,6 +34,7 @@
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.0.0",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
