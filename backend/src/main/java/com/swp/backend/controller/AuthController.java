@@ -63,8 +63,8 @@ public class AuthController {
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String accessToken = jwtService.generateToken(userDetails);
-            String refreshToken = jwtService.generateRefreshToken(userDetails);
+            String accessToken = jwtService.generateToken(userDetails, request.isRememberMe());
+            String refreshToken = jwtService.generateRefreshToken(userDetails, request.isRememberMe());
 
             // Get user info
             User user = userService.findByUsernameOrEmail(request.getUsernameOrEmail());

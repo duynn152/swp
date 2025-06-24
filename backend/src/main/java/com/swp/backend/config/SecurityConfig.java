@@ -26,6 +26,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
+import org.springframework.http.HttpMethod;
 
 import java.io.IOException;
 
@@ -87,7 +88,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
                         // Patient endpoints
                         .requestMatchers("/api/patient/**").hasAnyRole("PATIENT", "DOCTOR", "STAFF", "ADMIN")
-                        // All other requests need authentication
+                        // Public endpoints that don't require authentication
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/blog/**").permitAll() // Temporarily allow blog endpoints
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/active").permitAll()
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

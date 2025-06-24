@@ -1,6 +1,7 @@
 export interface LoginRequest {
   usernameOrEmail: string
   password: string
+  rememberMe?: boolean
 }
 
 export interface RegisterRequest {
@@ -97,31 +98,92 @@ export const refreshToken = async (refreshToken: string) => {
   return response.json()
 }
 
-// Storage helpers
-export const storeTokens = (accessToken: string, refreshToken: string) => {
-  localStorage.setItem('accessToken', accessToken)
-  localStorage.setItem('refreshToken', refreshToken)
+// Storage helpers with remember me support
+export const storeTokens = (accessToken: string, refreshToken: string, rememberMe: boolean = false) => {
+  const storage = rememberMe ? localStorage : sessionStorage
+  storage.setItem('accessToken', accessToken)
+  storage.setItem('refreshToken', refreshToken)
+  storage.setItem('rememberMe', rememberMe.toString())
 }
 
 export const getAccessToken = () => {
-  return localStorage.getItem('accessToken')
+  return localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
 }
 
 export const getRefreshToken = () => {
-  return localStorage.getItem('refreshToken')
+  return localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken')
+}
+
+export const getRememberMe = () => {
+  const rememberMe = localStorage.getItem('rememberMe') || sessionStorage.getItem('rememberMe')
+  return rememberMe === 'true'
 }
 
 export const clearTokens = () => {
   localStorage.removeItem('accessToken')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
+  localStorage.removeItem('rememberMe')
+  sessionStorage.removeItem('accessToken')
+  sessionStorage.removeItem('refreshToken')
+  sessionStorage.removeItem('user')
+  sessionStorage.removeItem('rememberMe')
 }
 
-export const storeUser = (user: any) => {
-  localStorage.setItem('user', JSON.stringify(user))
+export const storeUser = (user: any, rememberMe: boolean = false) => {
+  const storage = rememberMe ? localStorage : sessionStorage
+  storage.setItem('user', JSON.stringify(user))
 }
 
 export const getStoredUser = () => {
-  const user = localStorage.getItem('user')
+  const user = localStorage.getItem('user') || sessionStorage.getItem('user')
   return user ? JSON.parse(user) : null
+}
+
+// Check if token is valid (not expired)
+export const isTokenValid = (token: string): boolean => {
+  if (!token) return false
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const currentTime = Date.now() / 1000
+    return payload.exp > currentTime
+  } catch (error) {
+    return false
+  }
+}
+
+// Check if user is currently logged in
+export const isLoggedIn = (): boolean => {
+  const token = getAccessToken()
+  return token ? isTokenValid(token) : false
+}
+
+// Remember login credentials (only username/email for security)
+export const saveLoginCredentials = (usernameOrEmail: string, rememberMe: boolean) => {
+  console.log('💾 Saving login credentials:', { usernameOrEmail, rememberMe })
+  
+  if (rememberMe) {
+    localStorage.setItem('savedUsername', usernameOrEmail)
+    console.log('✅ Saved username to localStorage:', usernameOrEmail)
+  } else {
+    localStorage.removeItem('savedUsername')
+    console.log('🗑️ Removed saved username from localStorage')
+  }
+}
+
+export const getSavedUsername = (): string | null => {
+  const saved = localStorage.getItem('savedUsername')
+  console.log('📖 Getting saved username:', saved)
+  return saved
+}
+
+export const clearSavedCredentials = () => {
+  localStorage.removeItem('savedUsername')
+}
+
+// Clear everything including saved credentials (for complete logout)
+export const clearAllData = () => {
+  clearTokens()
+  clearSavedCredentials()
 } 

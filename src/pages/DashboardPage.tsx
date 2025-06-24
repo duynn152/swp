@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { getStoredUser, clearTokens } from '../services/authService'
+import { getStoredUser, clearAllData } from '../services/authService'
 import { DashboardLayout } from '../components/DashboardLayout'
 import { DashboardContent } from '../components/DashboardContent'
+import { UserManagement } from '../components/UserManagement'
+import { BlogManagement } from '../components/BlogManagement'
 
 interface DashboardPageProps {
   onNavigate?: (page: string) => void
@@ -9,6 +11,7 @@ interface DashboardPageProps {
 
 export const DashboardPage = ({ onNavigate }: DashboardPageProps) => {
   const [user, setUser] = useState<any>(null)
+  const [currentPage, setCurrentPage] = useState('dashboard')
 
   useEffect(() => {
     const storedUser = getStoredUser()
@@ -21,15 +24,23 @@ export const DashboardPage = ({ onNavigate }: DashboardPageProps) => {
   }, [onNavigate])
 
   const handleLogout = () => {
-    clearTokens()
+    clearAllData()
     onNavigate?.('login')
   }
 
   const handleSidebarNavigate = (page: string) => {
+    setCurrentPage(page)
+    
     // Handle navigation from sidebar
     switch (page) {
       case 'dashboard':
         // Stay on dashboard - no action needed
+        break
+      case 'user-management':
+        // Show User Management component (handled by conditional rendering)
+        break
+      case 'blog-management':
+        // Show Blog Management component (handled by conditional rendering)
         break
       case 'appointments':
         // Navigate to appointments page (when implemented)
@@ -56,6 +67,28 @@ export const DashboardPage = ({ onNavigate }: DashboardPageProps) => {
     }
   }
 
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'user-management':
+        // Only show User Management for ADMIN role
+        if (user?.role === 'ADMIN') {
+          return <UserManagement />
+        }
+        // If not admin, fallback to dashboard
+        return <DashboardContent user={user} onNavigate={handleSidebarNavigate} />
+      case 'blog-management':
+        // Show Blog Management for both STAFF and ADMIN role
+        if (user?.role === 'STAFF' || user?.role === 'ADMIN') {
+          return <BlogManagement />
+        }
+        // If not staff or admin, fallback to dashboard
+        return <DashboardContent user={user} onNavigate={handleSidebarNavigate} />
+      case 'dashboard':
+      default:
+        return <DashboardContent user={user} onNavigate={handleSidebarNavigate} />
+    }
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -72,11 +105,11 @@ export const DashboardPage = ({ onNavigate }: DashboardPageProps) => {
       user={user}
       onNavigate={handleSidebarNavigate}
       onLogout={handleLogout}
+      selectedKey={currentPage}
     >
-      <DashboardContent 
-        user={user} 
-        onNavigate={handleSidebarNavigate}
-      />
+      <div className="p-6">
+        {renderContent()}
+      </div>
     </DashboardLayout>
   )
 } 

@@ -9,9 +9,10 @@ interface DashboardLayoutProps {
   onNavigate?: (page: string) => void
   onLogout: () => void
   children: React.ReactNode
+  selectedKey?: string
 }
 
-export const DashboardLayout = ({ user, onNavigate, onLogout, children }: DashboardLayoutProps) => {
+export const DashboardLayout = ({ user, onNavigate, onLogout, children, selectedKey }: DashboardLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false)
 
   const toggleCollapse = () => {
@@ -26,6 +27,7 @@ export const DashboardLayout = ({ user, onNavigate, onLogout, children }: Dashbo
         onLogout={onLogout}
         collapsed={collapsed}
         onToggleCollapse={toggleCollapse}
+        selectedKey={selectedKey}
       />
       
       <Layout style={{ marginLeft: collapsed ? 80 : 280, transition: 'margin-left 0.2s' }}>

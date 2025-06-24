@@ -25,6 +25,9 @@ public class JwtService {
     
     @Value("${application.security.jwt.refresh-token.expiration:604800000}")
     private long refreshExpiration;
+    
+    @Value("${application.security.jwt.remember-me.expiration:2592000000}")
+    private long rememberMeExpiration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -43,8 +46,22 @@ public class JwtService {
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
+    public String generateToken(UserDetails userDetails, boolean rememberMe) {
+        return generateToken(new HashMap<>(), userDetails, rememberMe);
+    }
+
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails, boolean rememberMe) {
+        long expiration = rememberMe ? rememberMeExpiration : jwtExpiration;
+        return buildToken(extraClaims, userDetails, expiration);
+    }
+
     public String generateRefreshToken(UserDetails userDetails) {
         return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails, boolean rememberMe) {
+        long expiration = rememberMe ? rememberMeExpiration * 2 : refreshExpiration;
+        return buildToken(new HashMap<>(), userDetails, expiration);
     }
 
     private String buildToken(

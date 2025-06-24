@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Row, Col, Card, Form, Input, Button, Typography, Checkbox, Divider, DatePicker, Select, message } from 'antd'
 import { 
   UserOutlined, 
@@ -10,7 +10,7 @@ import {
   ArrowLeftOutlined,
   HomeOutlined
 } from '@ant-design/icons'
-import { loginUser, registerUser, storeTokens, storeUser } from '../services/authService'
+import { loginUser, registerUser, storeTokens, storeUser, saveLoginCredentials, getSavedUsername } from '../services/authService'
 
 const { Title, Text, Link } = Typography
 const { Option } = Select
@@ -25,17 +25,35 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
   const [registerForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
 
-  const onLoginFinish = async (values: { usernameOrEmail: string; password: string }) => {
+  // Auto-fill saved username when component mounts
+  useEffect(() => {
+    const savedUsername = getSavedUsername()
+    console.log('🔍 Debug auto-fill:', { savedUsername, isLogin })
+    
+    if (savedUsername && isLogin) {
+      console.log('✅ Setting form values:', { usernameOrEmail: savedUsername, rememberMe: true })
+      loginForm.setFieldsValue({
+        usernameOrEmail: savedUsername,
+        rememberMe: true // Also set remember me to true if we have saved username
+      })
+    }
+  }, [isLogin, loginForm])
+
+  const onLoginFinish = async (values: { usernameOrEmail: string; password: string; rememberMe?: boolean }) => {
     setLoading(true)
     try {
       const response = await loginUser({
         usernameOrEmail: values.usernameOrEmail,
-        password: values.password
+        password: values.password,
+        rememberMe: values.rememberMe || false
       })
       
-      // Lưu tokens và user info
-      storeTokens(response.accessToken, response.refreshToken)
-      storeUser(response.user)
+      // Lưu login credentials nếu remember me được chọn
+      saveLoginCredentials(values.usernameOrEmail, values.rememberMe || false)
+      
+      // Lưu tokens và user info với remember me flag
+      storeTokens(response.accessToken, response.refreshToken, values.rememberMe || false)
+      storeUser(response.user, values.rememberMe || false)
       
       message.success('Đăng nhập thành công!')
       
@@ -150,7 +168,9 @@ export const LoginPage = ({ onNavigate }: LoginPageProps) => {
 
                   <Form.Item>
                     <div className="flex justify-between items-center">
-                      <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+                      <Form.Item name="rememberMe" valuePropName="checked" noStyle>
+                        <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+                      </Form.Item>
                       <Link className="text-blue-600">Quên mật khẩu?</Link>
                     </div>
                   </Form.Item>

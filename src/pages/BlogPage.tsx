@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Row, Col, Card, Button, Typography, Space, Badge, Input, Select, Pagination } from 'antd'
 import { 
   EditOutlined,
@@ -10,6 +10,7 @@ import {
   TagOutlined,
   UserOutlined
 } from '@ant-design/icons'
+import { blogService, type BlogPost } from '../services/blogService'
 
 const { Title, Paragraph, Text } = Typography
 const { Search } = Input
@@ -19,104 +20,78 @@ export const BlogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
+  const [categories, setCategories] = useState<Array<{ value: string, label: string, count: number }>>([])
 
-  const categories = [
-    { value: 'all', label: 'Tất cả', count: 24 },
-    { value: 'tim-mach', label: 'Tim mạch', count: 8 },
-    { value: 'noi-tiet', label: 'Nội tiết', count: 6 },
-    { value: 'phong-ngua', label: 'Phòng ngừa', count: 5 },
-    { value: 'dinh-duong', label: 'Dinh dưỡng', count: 5 }
-  ]
-
-  const blogPosts = [
-    {
-      id: 1,
-      title: "10 Thói quen tốt cho sức khỏe tim mạch",
-      excerpt: "Tìm hiểu những thói quen đơn giản hàng ngày giúp bảo vệ tim mạch khỏe mạnh và phòng ngừa các bệnh lý nguy hiểm.",
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "Tim mạch",
-      categorySlug: "tim-mach",
-      date: "15/12/2024",
-      readTime: "5 phút đọc",
-      views: 1250,
-      author: "BS. Nguyễn Văn An",
-      isFeatured: true
-    },
-    {
-      id: 2,
-      title: "Chế độ dinh dưỡng cho người tiểu đường",
-      excerpt: "Hướng dẫn chi tiết về chế độ ăn uống khoa học, giúp kiểm soát đường huyết và duy trì sức khỏe ổn định.",
-      image: "https://images.unsplash.com/photo-1542736667-069246bdbc6d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "Nội tiết",
-      categorySlug: "noi-tiet",
-      date: "12/12/2024",
-      readTime: "7 phút đọc",
-      views: 980,
-      author: "BS. Trần Thị Bình",
-      isFeatured: false
-    },
-    {
-      id: 3,
-      title: "Tầm quan trọng của việc khám sức khỏe định kỳ",
-      excerpt: "Khám sức khỏe định kỳ giúp phát hiện sớm các bệnh lý, từ đó có phương pháp điều trị kịp thời và hiệu quả.",
-      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "Phòng ngừa",
-      categorySlug: "phong-ngua",
-      date: "10/12/2024",
-      readTime: "4 phút đọc",
-      views: 1500,
-      author: "BS. Lê Hoàng Cường",
-      isFeatured: true
-    },
-    {
-      id: 4,
-      title: "Cách phòng ngừa cảm cúm mùa đông",
-      excerpt: "Những biện pháp đơn giản và hiệu quả để bảo vệ bản thân và gia đình khỏi các bệnh cảm cúm phổ biến.",
-      image: "https://images.unsplash.com/photo-1584515933487-779824d29309?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "Phòng ngừa",
-      categorySlug: "phong-ngua",
-      date: "08/12/2024",
-      readTime: "6 phút đọc",
-      views: 875,
-      author: "BS. Phạm Minh Đức",
-      isFeatured: false
-    },
-    {
-      id: 5,
-      title: "Dinh dưỡng hợp lý cho người cao tuổi",
-      excerpt: "Những nguyên tắc dinh dưỡng cần thiết để người cao tuổi duy trì sức khỏe và chất lượng cuộc sống tốt nhất.",
-      image: "https://images.unsplash.com/photo-1505935428862-770b6f24f629?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "Dinh dưỡng",
-      categorySlug: "dinh-duong",
-      date: "05/12/2024",
-      readTime: "8 phút đọc",
-      views: 1120,
-      author: "BS. Võ Thị Hoa",
-      isFeatured: false
-    },
-    {
-      id: 6,
-      title: "Stress và tác động đến sức khỏe tim mạch",
-      excerpt: "Tìm hiểu về mối liên hệ giữa stress và các bệnh lý tim mạch, cùng các phương pháp quản lý stress hiệu quả.",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-      category: "Tim mạch",
-      categorySlug: "tim-mach",
-      date: "03/12/2024",
-      readTime: "6 phút đọc",
-      views: 890,
-      author: "BS. Nguyễn Văn An",
-      isFeatured: false
+  // Load data from service
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [posts, categories] = await Promise.all([
+          blogService.getPublishedPosts(),
+          blogService.getCategories()
+        ])
+        setBlogPosts(posts)
+        setCategories(categories)
+      } catch (error) {
+        console.error('Error loading blog data:', error)
+      }
     }
-  ]
 
-  const filteredPosts = blogPosts.filter(post => {
-    const matchesCategory = selectedCategory === 'all' || post.categorySlug === selectedCategory
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+    loadData()
 
-  const featuredPosts = blogPosts.filter(post => post.isFeatured)
+    // Subscribe to changes
+    const unsubscribe = blogService.subscribe(() => {
+      loadData()
+    })
+
+    return unsubscribe
+  }, [])
+
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([])
+  const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([])
+
+  // Load filtered and featured posts
+  useEffect(() => {
+    const loadFilteredPosts = async () => {
+      try {
+        const posts = await blogService.searchPosts(searchTerm, selectedCategory)
+        setFilteredPosts(posts)
+      } catch (error) {
+        console.error('Error loading filtered posts:', error)
+        setFilteredPosts([])
+      }
+    }
+
+    const loadFeaturedPosts = async () => {
+      try {
+        const posts = await blogService.getFeaturedPosts()
+        setFeaturedPosts(posts)
+      } catch (error) {
+        console.error('Error loading featured posts:', error)
+        setFeaturedPosts([])
+      }
+    }
+
+    loadFilteredPosts()
+    loadFeaturedPosts()
+  }, [searchTerm, selectedCategory])
+
+  // Paginate filtered posts
+  const pageSize = 6
+  const startIndex = (currentPage - 1) * pageSize
+  const paginatedPosts = filteredPosts.slice(startIndex, startIndex + pageSize)
+
+  const handlePostClick = async (post: BlogPost) => {
+    // Increment views when post is clicked
+    try {
+      await blogService.incrementViews(post.id)
+    } catch (error) {
+      console.error('Error incrementing views:', error)
+    }
+    // Here you can add navigation to full post view
+    console.log('View post:', post.title)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -148,8 +123,9 @@ export const BlogPage = () => {
                   {featuredPosts.map((post) => (
                     <Col xs={24} md={12} key={post.id}>
                       <Card 
-                        className="h-full hover:shadow-xl transition-all duration-300 border-none overflow-hidden"
+                        className="h-full hover:shadow-xl transition-all duration-300 border-none overflow-hidden cursor-pointer"
                         hoverable
+                        onClick={() => handlePostClick(post)}
                         cover={
                           <div className="relative overflow-hidden h-56">
                             <img 
@@ -178,7 +154,7 @@ export const BlogPage = () => {
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                             <span className="flex items-center">
                               <CalendarOutlined className="mr-1" />
-                              {post.date}
+                              {post.createdAt}
                             </span>
                             <span className="flex items-center">
                               <EyeOutlined className="mr-1" />
@@ -261,11 +237,12 @@ export const BlogPage = () => {
                 Tất cả bài viết ({filteredPosts.length})
               </Title>
               <Row gutter={[24, 24]}>
-                {filteredPosts.map((post) => (
+                {paginatedPosts.map((post) => (
                   <Col xs={24} md={12} key={post.id}>
                     <Card 
-                      className="h-full hover:shadow-lg transition-shadow duration-300 border-none"
+                      className="h-full hover:shadow-lg transition-shadow duration-300 border-none cursor-pointer"
                       hoverable
+                      onClick={() => handlePostClick(post)}
                     >
                       <div className="flex space-x-4">
                         <div className="flex-shrink-0">
@@ -278,7 +255,7 @@ export const BlogPage = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
                             <Badge color="blue" text={post.category} />
-                            <span>{post.date}</span>
+                            <span>{post.createdAt}</span>
                           </div>
                           
                           <Title level={5} className="mb-2 line-clamp-2">
@@ -315,7 +292,7 @@ export const BlogPage = () => {
               <Pagination
                 current={currentPage}
                 total={filteredPosts.length}
-                pageSize={6}
+                pageSize={pageSize}
                 onChange={setCurrentPage}
                 showSizeChanger={false}
                 showQuickJumper
@@ -354,7 +331,11 @@ export const BlogPage = () => {
               <Title level={4} className="mb-4">Bài viết gần đây</Title>
               <div className="space-y-4">
                 {blogPosts.slice(0, 5).map(post => (
-                  <div key={post.id} className="flex space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                  <div 
+                    key={post.id} 
+                    className="flex space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                    onClick={() => handlePostClick(post)}
+                  >
                     <img 
                       src={post.image} 
                       alt={post.title}
@@ -365,7 +346,7 @@ export const BlogPage = () => {
                         {post.title}
                       </Title>
                       <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>{post.date}</span>
+                        <span>{post.createdAt}</span>
                         <span>
                           <EyeOutlined className="mr-1" />
                           {post.views}

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Layout, Menu, Avatar, Typography, Button, Space, Tag } from 'antd'
 import {
   DashboardOutlined,
@@ -12,7 +11,9 @@ import {
   FileTextOutlined,
   BellOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  UsergroupAddOutlined,
+  EditOutlined
 } from '@ant-design/icons'
 
 const { Sider } = Layout
@@ -24,10 +25,10 @@ interface SidebarProps {
   onLogout: () => void
   collapsed?: boolean
   onToggleCollapse?: () => void
+  selectedKey?: string
 }
 
-export const Sidebar = ({ user, onNavigate, onLogout, collapsed = false, onToggleCollapse }: SidebarProps) => {
-  const [selectedKey, setSelectedKey] = useState('dashboard')
+export const Sidebar = ({ user, onNavigate, onLogout, collapsed = false, onToggleCollapse, selectedKey = 'dashboard' }: SidebarProps) => {
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -49,7 +50,8 @@ export const Sidebar = ({ user, onNavigate, onLogout, collapsed = false, onToggl
     }
   }
 
-  const menuItems = [
+  // Base menu items for all users
+  const baseMenuItems = [
     {
       key: 'dashboard',
       icon: <DashboardOutlined />,
@@ -82,8 +84,42 @@ export const Sidebar = ({ user, onNavigate, onLogout, collapsed = false, onToggl
     }
   ]
 
+  // Admin-only menu items
+  const adminMenuItems = [
+    {
+      key: 'user-management',
+      icon: <UsergroupAddOutlined />,
+      label: 'Quản lý người dùng',
+    }
+  ]
+
+  // Staff-only menu items
+  const staffMenuItems = [
+    {
+      key: 'blog-management',
+      icon: <EditOutlined />,
+      label: 'Quản lý Blog',
+    }
+  ]
+
+  // Get menu items based on user role
+  const getMenuItems = () => {
+    const menuItems = [...baseMenuItems]
+    
+    // Add admin-specific items for ADMIN role
+    if (user?.role === 'ADMIN') {
+      menuItems.push(...adminMenuItems)
+    }
+    
+    // Add staff-specific items for STAFF role, and also allow ADMIN to access blog management
+    if (user?.role === 'STAFF' || user?.role === 'ADMIN') {
+      menuItems.push(...staffMenuItems)
+    }
+    
+    return menuItems
+  }
+
   const handleMenuClick = ({ key }: { key: string }) => {
-    setSelectedKey(key)
     onNavigate?.(key)
   }
 
@@ -168,7 +204,7 @@ export const Sidebar = ({ user, onNavigate, onLogout, collapsed = false, onToggl
           <Menu
             mode="inline"
             selectedKeys={[selectedKey]}
-            items={menuItems}
+            items={getMenuItems()}
             onClick={handleMenuClick}
             className="border-none"
             inlineIndent={collapsed ? 0 : 20}
