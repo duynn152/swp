@@ -17,6 +17,8 @@ import {
   Alert,
   Progress,
   Badge,
+  Row,
+  Col,
 } from 'antd'
 import { 
   PlusOutlined, 
@@ -30,7 +32,9 @@ import {
   CloseCircleOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  SearchOutlined,
+  ClearOutlined,
 } from '@ant-design/icons'
 import { 
   useUsers, 
@@ -69,6 +73,11 @@ export const UserManagement = () => {
   const [importProgress, setImportProgress] = useState(0)
   const [form] = Form.useForm()
 
+  // New states for search and filter functionality
+  const [searchText, setSearchText] = useState('')
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL')
+
   // Queries and mutations
   const { data: users, isLoading, refetch: refetchUsers } = useUsers()
   const createUserMutation = useCreateUser()
@@ -93,6 +102,37 @@ export const UserManagement = () => {
   const getRoleColor = (role: UserRole) => {
     const roleOption = roleOptions.find(option => option.value === role)
     return roleOption?.color || 'default'
+  }
+
+  // Search and filter functions
+  const getFilteredUsers = () => {
+    if (!users) return []
+
+    return users.filter(user => {
+      // Search filter
+      const searchLower = searchText.toLowerCase()
+      const matchesSearch = !searchText || 
+        user.username.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        user.fullName.toLowerCase().includes(searchLower)
+
+      // Role filter
+      const matchesRole = roleFilter === 'ALL' || user.role === roleFilter
+
+      // Status filter
+      const matchesStatus = statusFilter === 'ALL' || 
+        (statusFilter === 'ACTIVE' && user.isActive) ||
+        (statusFilter === 'INACTIVE' && !user.isActive)
+
+      return matchesSearch && matchesRole && matchesStatus
+    })
+  }
+
+  const handleClearFilters = () => {
+    setSearchText('')
+    setRoleFilter('ALL')
+    setStatusFilter('ALL')
+    message.success('Filters cleared!')
   }
 
   const handleActivateUser = async (userId: number) => {
@@ -560,26 +600,32 @@ export const UserManagement = () => {
       dataIndex: 'id',
       key: 'id',
       width: 80,
+      sorter: (a: User, b: User) => a.id - b.id,
+      defaultSortOrder: 'ascend' as const,
     },
     {
       title: 'Username',
       dataIndex: 'username',
       key: 'username',
+      sorter: (a: User, b: User) => a.username.localeCompare(b.username),
     },
     {
       title: 'Full Name',
       dataIndex: 'fullName',
       key: 'fullName',
+      sorter: (a: User, b: User) => a.fullName.localeCompare(b.fullName),
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      sorter: (a: User, b: User) => a.email.localeCompare(b.email),
     },
     {
       title: 'Role',
       dataIndex: 'role',
       key: 'role',
+      sorter: (a: User, b: User) => a.role.localeCompare(b.role),
       render: (role: UserRole) => (
         <Tag color={getRoleColor(role)}>
           {getRoleLabel(role)}
@@ -590,6 +636,7 @@ export const UserManagement = () => {
       title: 'Status',
       dataIndex: 'isActive',
       key: 'status',
+      sorter: (a: User, b: User) => Number(a.isActive) - Number(b.isActive),
       render: (isActive: boolean) => (
         <Badge 
           status={isActive ? 'success' : 'error'} 
@@ -601,6 +648,7 @@ export const UserManagement = () => {
       title: 'Created At',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      sorter: (a: User, b: User) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (date: string) => new Date(date).toLocaleDateString(),
     },
     {
@@ -716,6 +764,68 @@ export const UserManagement = () => {
         />
       )}
 
+      {/* Search and Filter Controls */}
+      <Card className="mb-4 bg-gray-50">
+        <Row gutter={16} align="middle">
+          <Col xs={24} sm={8} md={6} lg={8}>
+            <Input
+              placeholder="Search by username, email, or name..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col xs={12} sm={4} md={4} lg={4}>
+            <Select
+              placeholder="Filter by Role"
+              value={roleFilter}
+              onChange={setRoleFilter}
+              style={{ width: '100%' }}
+            >
+              <Option value="ALL">All Roles</Option>
+              {roleOptions.map(option => (
+                <Option key={option.value} value={option.value}>
+                  <Tag color={option.color} className="mr-1">
+                    {option.label}
+                  </Tag>
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={12} sm={4} md={4} lg={4}>
+            <Select
+              placeholder="Filter by Status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              style={{ width: '100%' }}
+            >
+              <Option value="ALL">All Status</Option>
+              <Option value="ACTIVE">
+                <Badge status="success" text="Active" />
+              </Option>
+              <Option value="INACTIVE">
+                <Badge status="error" text="Inactive" />
+              </Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={8} md={6} lg={8}>
+            <Space>
+              <Button
+                icon={<ClearOutlined />}
+                onClick={handleClearFilters}
+                disabled={searchText === '' && roleFilter === 'ALL' && statusFilter === 'ALL'}
+              >
+                Clear Filters
+              </Button>
+              <Text type="secondary">
+                {getFilteredUsers().length} of {users?.length || 0} users
+              </Text>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
+
       {/* Bulk Actions */}
       {selectedUserIds.length > 0 && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
@@ -761,7 +871,7 @@ export const UserManagement = () => {
 
       <Table
         columns={columns}
-        dataSource={users}
+        dataSource={getFilteredUsers()}
         rowKey="id"
         loading={isLoading}
         scroll={{ x: 1000 }}

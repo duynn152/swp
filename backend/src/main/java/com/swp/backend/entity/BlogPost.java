@@ -28,7 +28,7 @@ public class BlogPost {
     @Column(length = 500)
     private String excerpt;
     
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String image;
     
     @Column(nullable = false, length = 100)

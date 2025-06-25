@@ -9,6 +9,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { Services } from './pages/Services'
 import { Contact } from './pages/Contact'
 import { BlogPage } from './pages/BlogPage'
+import { BlogDetailPage } from './pages/BlogDetailPage'
 import { getStoredUser, isLoggedIn, clearTokens } from './services/authService'
 
 const { Content } = Layout
@@ -54,6 +55,12 @@ export const HospitalApp = () => {
   }
 
   const renderPage = () => {
+    // Handle blog detail pages
+    if (currentPage.startsWith('blog-detail-')) {
+      const postId = parseInt(currentPage.replace('blog-detail-', ''))
+      return <BlogDetailPage postId={postId} onNavigate={handleNavigate} />
+    }
+
     switch (currentPage) {
       case 'home':
         return <HomePage />
@@ -62,7 +69,7 @@ export const HospitalApp = () => {
       case 'services':
         return <Services />
       case 'blog':
-        return <BlogPage />
+        return <BlogPage onNavigate={handleNavigate} />
       case 'contact':
         return <Contact />
       case 'login':
@@ -75,7 +82,7 @@ export const HospitalApp = () => {
   }
 
   // Trang login và dashboard có layout riêng
-  if (currentPage === 'login' || currentPage === 'dashboard') {
+  if (currentPage === 'login' || currentPage === 'dashboard' || currentPage.startsWith('blog-detail-')) {
     return renderPage()
   }
 

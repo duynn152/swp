@@ -1,5 +1,5 @@
 export interface BlogPost {
-  id: string
+  id: number
   title: string
   content: string
   excerpt: string
@@ -42,10 +42,19 @@ const API_BASE_URL = 'http://localhost:8080/api/blog'
 
 // Helper function to get auth headers
 const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem('accessToken')
+  const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+  console.log('🔑 Auth token found:', token ? 'Yes' : 'No')
   return {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` })
+  }
+}
+
+// Helper function to convert backend BlogPost to frontend format
+const convertBlogPostFromBackend = (backendPost: any): BlogPost => {
+  return {
+    ...backendPost,
+    status: toFrontendStatus(backendPost.status)
   }
 }
 
@@ -86,6 +95,14 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
     return null
   }
 
+  // Handle text responses (some bulk operations return plain text)
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('text/plain')) {
+    const textData = await response.text()
+    console.log('✅ Response text:', textData)
+    return { message: textData }
+  }
+
   const responseData = await response.json()
   console.log('✅ Response data:', responseData)
   return responseData
@@ -119,7 +136,7 @@ class BlogService {
   async getAllPosts(): Promise<BlogPost[]> {
     try {
       const posts = await apiRequest('')
-      return posts || []
+      return (posts || []).map(convertBlogPostFromBackend)
     } catch (error) {
       console.error('Error fetching all posts:', error)
       return []
@@ -130,7 +147,7 @@ class BlogService {
   async getPublishedPosts(): Promise<BlogPost[]> {
     try {
       const posts = await apiRequest('/published')
-      return posts || []
+      return (posts || []).map(convertBlogPostFromBackend)
     } catch (error) {
       console.error('Error fetching published posts:', error)
       return []
@@ -163,7 +180,7 @@ class BlogService {
   async getPostById(id: string): Promise<BlogPost | undefined> {
     try {
       const post = await apiRequest(`/${id}`)
-      return post
+      return post ? convertBlogPostFromBackend(post) : undefined
     } catch (error) {
       console.error('Error fetching post by ID:', error)
       return undefined
@@ -192,7 +209,7 @@ class BlogService {
       })
 
       this.notifyListeners()
-      return newPost
+      return convertBlogPostFromBackend(newPost)
     } catch (error) {
       console.error('Error creating post:', error)
       throw error
@@ -214,7 +231,7 @@ class BlogService {
       })
 
       this.notifyListeners()
-      return updatedPost
+      return updatedPost ? convertBlogPostFromBackend(updatedPost) : null
     } catch (error) {
       console.error('Error updating post:', error)
       return null
@@ -267,7 +284,7 @@ class BlogService {
       if (categorySlug) params.append('category', categorySlug)
 
       const posts = await apiRequest(`/search?${params.toString()}`)
-      return posts || []
+      return (posts || []).map(convertBlogPostFromBackend)
     } catch (error) {
       console.error('Error searching posts:', error)
       return []
@@ -319,15 +336,19 @@ class BlogService {
 
   // Bulk operations
   async bulkDelete(ids: string[]): Promise<boolean> {
+    console.log('🗑️ BlogService.bulkDelete called with:', ids)
     try {
-      await apiRequest('/bulk', {
+      console.log('🗑️ Converting IDs to integers:', ids.map(id => parseInt(id)))
+      const result = await apiRequest('/bulk', {
         method: 'DELETE',
         body: JSON.stringify(ids.map(id => parseInt(id)))
       })
+      console.log('🗑️ API request result:', result)
       this.notifyListeners()
+      console.log('🗑️ Listeners notified, returning true')
       return true
     } catch (error) {
-      console.error('Error bulk deleting posts:', error)
+      console.error('🗑️ Error bulk deleting posts:', error)
       return false
     }
   }

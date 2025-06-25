@@ -16,7 +16,11 @@ const { Title, Paragraph, Text } = Typography
 const { Search } = Input
 const { Option } = Select
 
-export const BlogPage = () => {
+interface BlogPageProps {
+  onNavigate: (page: string) => void
+}
+
+export const BlogPage = ({ onNavigate }: BlogPageProps) => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
@@ -89,8 +93,8 @@ export const BlogPage = () => {
     } catch (error) {
       console.error('Error incrementing views:', error)
     }
-    // Here you can add navigation to full post view
-    console.log('View post:', post.title)
+    // Navigate to detailed blog post view
+    onNavigate(`blog-detail-${post.id}`)
   }
 
   return (
@@ -132,6 +136,10 @@ export const BlogPage = () => {
                               src={post.image} 
                               alt={post.title}
                               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
+                              }}
                             />
                             <div className="absolute top-3 left-3">
                               <Badge 
@@ -250,6 +258,10 @@ export const BlogPage = () => {
                             src={post.image} 
                             alt={post.title}
                             className="w-24 h-24 object-cover rounded-lg"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
+                            }}
                           />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -340,6 +352,10 @@ export const BlogPage = () => {
                       src={post.image} 
                       alt={post.title}
                       className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <Title level={5} className="mb-1 line-clamp-2 text-sm">

@@ -215,7 +215,12 @@ public class BlogController {
     @DeleteMapping("/bulk")
     @Operation(summary = "Bulk delete posts", description = "Deletes multiple blog posts")
     @ApiResponse(responseCode = "204", description = "Posts deleted successfully")
-    public ResponseEntity<Void> bulkDelete(@RequestBody List<Long> ids) {
+    public ResponseEntity<Void> bulkDelete(@RequestBody List<Integer> intIds) {
+        // Convert Integer IDs to Long IDs
+        List<Long> ids = intIds.stream()
+                .map(Integer::longValue)
+                .collect(java.util.stream.Collectors.toList());
+        
         blogService.bulkDelete(ids);
         return ResponseEntity.noContent().build();
     }
@@ -223,7 +228,12 @@ public class BlogController {
     @PutMapping("/bulk/publish")
     @Operation(summary = "Bulk publish posts", description = "Publishes multiple blog posts")
     @ApiResponse(responseCode = "200", description = "Posts published successfully")
-    public ResponseEntity<String> bulkPublish(@RequestBody List<Long> ids) {
+    public ResponseEntity<String> bulkPublish(@RequestBody List<Integer> intIds) {
+        // Convert Integer IDs to Long IDs
+        List<Long> ids = intIds.stream()
+                .map(Integer::longValue)
+                .collect(java.util.stream.Collectors.toList());
+        
         blogService.bulkPublish(ids);
         return ResponseEntity.ok("Posts published successfully");
     }
@@ -231,7 +241,12 @@ public class BlogController {
     @PutMapping("/bulk/unpublish")
     @Operation(summary = "Bulk unpublish posts", description = "Unpublishes multiple blog posts")
     @ApiResponse(responseCode = "200", description = "Posts unpublished successfully")
-    public ResponseEntity<String> bulkUnpublish(@RequestBody List<Long> ids) {
+    public ResponseEntity<String> bulkUnpublish(@RequestBody List<Integer> intIds) {
+        // Convert Integer IDs to Long IDs
+        List<Long> ids = intIds.stream()
+                .map(Integer::longValue)
+                .collect(java.util.stream.Collectors.toList());
+        
         blogService.bulkUnpublish(ids);
         return ResponseEntity.ok("Posts unpublished successfully");
     }
@@ -241,8 +256,13 @@ public class BlogController {
     @ApiResponse(responseCode = "200", description = "Featured status updated successfully")
     public ResponseEntity<String> bulkSetFeatured(@RequestBody Map<String, Object> request) {
         @SuppressWarnings("unchecked")
-        List<Long> ids = (List<Long>) request.get("ids");
+        List<Integer> intIds = (List<Integer>) request.get("ids");
         Boolean featured = (Boolean) request.getOrDefault("featured", false);
+        
+        // Convert Integer IDs to Long IDs
+        List<Long> ids = intIds.stream()
+                .map(Integer::longValue)
+                .collect(java.util.stream.Collectors.toList());
         
         blogService.bulkSetFeatured(ids, featured);
         return ResponseEntity.ok("Featured status updated successfully");
